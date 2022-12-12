@@ -1,0 +1,127 @@
+---
+title: "Twitter Sentiment Analysis"
+output: html_notebook
+---
+
+```{r}
+load("G:/FreelanceProjects/AlmaSpain/CEOtwetsraw.rdata")
+```
+//
+```{r}
+x$sourcetweet.main$text
+```
+
+```{r}
+LatestData <- read.csv("C:/Users/Dell Pc/Downloads/LatestData.csv")
+View(LatestData)
+```
+//
+```{r}
+library(tm)
+corpus <- iconv(LatestData$Data)
+corpus <- Corpus(VectorSource(corpus))
+inspect(corpus[1:5])
+```
+//
+```{r}
+corpus <- tm_map(corpus, tolower)
+inspect(corpus[1:5])
+```
+//
+```{r}
+corpus <- tm_map(corpus, removePunctuation)
+inspect(corpus[1:5])
+```
+//
+```{r}
+corpus <- tm_map(corpus, removeNumbers)
+inspect(corpus[1:5])
+```
+//
+```{r}
+cleanset <- tm_map(corpus, removeWords, stopwords('english'))
+inspect(cleanset[1:5])
+```
+//
+```{r}
+cleanset <- tm_map(cleanset, removeWords, c('aapl', 'apple'))
+cleanset <- tm_map(cleanset, gsub,
+                   pattern = 'stocks',
+                   replacement = 'stock')
+cleanset <- tm_map(cleanset, stemDocument)
+cleanset <- tm_map(cleanset, stripWhitespace)
+inspect(cleanset[1:5])
+```
+//
+```{r}
+tdm <- TermDocumentMatrix(cleanset)
+tdm <- as.matrix(tdm)
+tdm[1:10, 1:20]
+```
+//
+```{r}
+w <- rowSums(tdm)
+w <- subset(w, w>=25)
+barplot(w,
+        las = 2,
+        col = rainbow(50))
+```
+//
+```{r}
+library(wordcloud)
+w <- sort(rowSums(tdm), decreasing = TRUE)
+set.seed(222)
+wordcloud(words = names(w),
+          freq = w,
+          max.words = 150,
+          random.order = F,
+          min.freq = 5,
+          colors = brewer.pal(8, 'Dark2'),
+          scale = c(5, 0.3),
+          rot.per = 0.7)
+```
+```{r}
+library(wordcloud2)
+w <- data.frame(names(w), w)
+colnames(w) <- c('word', 'freq')
+wordcloud2(w,
+           size = 0.7,
+           shape = 'triangle',
+           rotateRatio = 0.5,
+           minSize = 1)
+```
+//
+```{r}
+library(syuzhet)
+library(lubridate)
+library(ggplot2)
+library(scales)
+library(reshape2)
+library(dplyr)
+```
+```{r}
+tweets <- iconv(LatestData$Data)
+```
+//
+```{r}
+s <- get_nrc_sentiment(tweets)
+head(s)
+```
+//
+```{r}
+barplot(colSums(s),
+        las = 2,
+        col = rainbow(10),
+        ylab = 'Count',
+        main = 'Sentiment Scores Tweets')
+```
+```{r}
+library(knitr)
+(f = system.file("examples", "knitr-minimal.Rnw", package = "knitr"))
+knit(f)  # compile to tex
+
+purl(f)  # tangle R code
+purl(f, documentation = 0)  # extract R code only
+purl(f, documentation = 2)  # also include documentation
+```
+
